@@ -4,7 +4,7 @@ public class AwesomeMessage {
     String text;
     String name;
     String imageUrl;
-
+//test
     public AwesomeMessage() {
     }
 
