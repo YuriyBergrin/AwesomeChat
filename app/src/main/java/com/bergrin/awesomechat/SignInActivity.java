@@ -17,6 +17,8 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class SignInActivity extends AppCompatActivity {
 
@@ -32,10 +34,16 @@ public class SignInActivity extends AppCompatActivity {
 
     private boolean loginActive;
 
+    FirebaseDatabase database;
+    DatabaseReference usersDatabaseReference;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in);
+
+        database = FirebaseDatabase.getInstance();
+        usersDatabaseReference = database.getReference().child("users");
 
         auth = FirebaseAuth.getInstance();
 
@@ -52,56 +60,97 @@ public class SignInActivity extends AppCompatActivity {
                 loginSignUpUser(emailEditText.getText().toString().trim(), passwordEditText.getText().toString().trim());
             }
         });
+        if (auth.getCurrentUser() != null) {
+            startActivity(new Intent(SignInActivity.this, MainActivity.class));
+        }
     }
 
     private void loginSignUpUser(String email, String password) {
 
         if (loginActive) {
-            auth.signInWithEmailAndPassword(email, password)
-                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            if (task.isSuccessful()) {
-                                // Sign in success, update UI with the signed-in user's information
-                                Log.d(TAG, "signInWithEmail:success");
-                                FirebaseUser user = auth.getCurrentUser();
-                                // updateUI(user);
-                                startActivity(new Intent(SignInActivity.this, MainActivity.class));
-                            } else {
-                                // If sign in fails, display a message to the user.
-                                Log.w(TAG, "signInWithEmail:failure", task.getException());
-                                Toast.makeText(SignInActivity.this, "Authentication failed.",
-                                        Toast.LENGTH_SHORT).show();
-                                //     updateUI(null);
+
+            //проверки полей
+            if (passwordEditText.getText().toString().trim().length() < 7) {
+                Toast.makeText(this, "Password must be at least 7 characters", Toast.LENGTH_LONG).show();
+            } else if (emailEditText.getText().toString().trim().isEmpty()) {
+                Toast.makeText(this, "Please input your email", Toast.LENGTH_LONG).show();
+            }
+            //проверкаи полей всё
+            else {
+
+                auth.signInWithEmailAndPassword(email, password)
+                        .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                            @Override
+                            public void onComplete(@NonNull Task<AuthResult> task) {
+                                if (task.isSuccessful()) {
+                                    // Sign in success, update UI with the signed-in user's information
+                                    Log.d(TAG, "signInWithEmail:success");
+                                    FirebaseUser user = auth.getCurrentUser();
+                                    // updateUI(user);
+                                    startActivity(new Intent(SignInActivity.this, MainActivity.class));
+                                } else {
+                                    // If sign in fails, display a message to the user.
+                                    Log.w(TAG, "signInWithEmail:failure", task.getException());
+                                    Toast.makeText(SignInActivity.this, "Authentication failed.",
+                                            Toast.LENGTH_SHORT).show();
+                                    //     updateUI(null);
+                                    // ...
+                                }
+
                                 // ...
                             }
-
-                            // ...
-                        }
-                    });
+                        });
+            }
         } else {
-            auth.createUserWithEmailAndPassword(email, password)
-                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            if (task.isSuccessful()) {
-                                // Sign in success, update UI with the signed-in user's information
-                                Log.d(TAG, "createUserWithEmail:success");
-                                FirebaseUser user = auth.getCurrentUser();
-                                //    updateUI(user);
-                                startActivity(new Intent(SignInActivity.this, MainActivity.class));
-                            } else {
-                                // If sign in fails, display a message to the user.
-                                Log.w(TAG, "createUserWithEmail:failure", task.getException());
-                                Toast.makeText(SignInActivity.this, "Authentication failed.",
-                                        Toast.LENGTH_SHORT).show();
-                                //  updateUI(null);
-                            }
 
-                            // ...
-                        }
-                    });
+            if (!passwordEditText.getText().toString().trim().equals(repeatPasswordEditText.getText().toString().trim())) {
+                Toast.makeText(this, "Passwords don`t match", Toast.LENGTH_LONG).show();
+            }
+
+//проверки полей
+            else if (passwordEditText.getText().toString().trim().length() < 7) {
+                Toast.makeText(this, "Password must be at least 7 characters", Toast.LENGTH_LONG).show();
+            } else if (emailEditText.getText().toString().trim().isEmpty()) {
+                Toast.makeText(this, "Please input your email", Toast.LENGTH_LONG).show();
+            }
+
+//проверки полей всё
+            else {
+                auth.createUserWithEmailAndPassword(email, password)
+                        .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                            @Override
+                            public void onComplete(@NonNull Task<AuthResult> task) {
+                                if (task.isSuccessful()) {
+                                    // Sign in success, update UI with the signed-in user's information
+                                    Log.d(TAG, "createUserWithEmail:success");
+                                    FirebaseUser user = auth.getCurrentUser();
+                                    //    updateUI(user);
+                                    createUser(user);
+                                    startActivity(new Intent(SignInActivity.this, MainActivity.class));
+                                } else {
+                                    // If sign in fails, display a message to the user.
+                                    Log.w(TAG, "createUserWithEmail:failure", task.getException());
+                                    Toast.makeText(SignInActivity.this, "Authentication failed.",
+                                            Toast.LENGTH_SHORT).show();
+                                    //  updateUI(null);
+                                }
+
+                                // ...
+                            }
+                        });
+            }
+
+
         }
+    }
+
+    private void createUser(FirebaseUser firebaseUser) {
+        User user = new User();
+        user.setId(firebaseUser.getUid());
+        user.setEmail(firebaseUser.getEmail());
+        user.setName(nameEditText.getText().toString().trim());
+
+        usersDatabaseReference.push().setValue(user);
     }
 
     public void toggleLoginMode(View view) {
