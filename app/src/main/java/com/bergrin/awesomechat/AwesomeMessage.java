@@ -1,16 +1,20 @@
 package com.bergrin.awesomechat;
 
 public class AwesomeMessage {
-    String text;
-    String name;
-    String imageUrl;
-//test
+    private String text;
+    private String name;
+    private String sender;
+    private String recipient;
+    private String imageUrl;
+    //test
     public AwesomeMessage() {
     }
 
-    public AwesomeMessage(String text, String name, String imageUrl) {
+    public AwesomeMessage(String text, String name, String sender, String recipient, String imageUrl) {
         this.text = text;
         this.name = name;
+        this.sender = sender;
+        this.recipient = recipient;
         this.imageUrl = imageUrl;
     }
 
@@ -28,6 +32,22 @@ public class AwesomeMessage {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getSender() {
+        return sender;
+    }
+
+    public void setSender(String sender) {
+        this.sender = sender;
+    }
+
+    public String getRecipient() {
+        return recipient;
+    }
+
+    public void setRecipient(String recipient) {
+        this.recipient = recipient;
     }
 
     public String getImageUrl() {

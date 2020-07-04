@@ -45,23 +45,36 @@ public class ChatActivity extends AppCompatActivity {
     private Button sendMessageButton;
     private EditText messageEditText;
     private String userName;
+    private String recipientUserId;
 
-    FirebaseDatabase database;
-    DatabaseReference messagesDatabaseReference;
-    ChildEventListener messagesChildEventListener;
+    private FirebaseDatabase database;
+    private DatabaseReference messagesDatabaseReference;
+    private ChildEventListener messagesChildEventListener;
 
-    DatabaseReference usersDatabaseReference;
-    ChildEventListener usersChildEventListener;
+    private DatabaseReference usersDatabaseReference;
+    private ChildEventListener usersChildEventListener;
 
-    FirebaseStorage storage;
-    StorageReference chatImagesStorageReference;
+    private FirebaseStorage storage;
+    private StorageReference chatImagesStorageReference;
 
     private final static int RC_IMAGE_PICKER = 123;
+
+    private FirebaseAuth auth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
+
+        auth = FirebaseAuth.getInstance();
+
+        Intent intent = getIntent();
+        if (intent != null) {
+            userName = intent.getStringExtra("userName");
+            recipientUserId = intent.getStringExtra("recipientUserId");
+        } else {
+            userName = "Default User";
+        }
 
         database = FirebaseDatabase.getInstance();
         storage = FirebaseStorage.getInstance();
@@ -69,14 +82,6 @@ public class ChatActivity extends AppCompatActivity {
         messagesDatabaseReference = database.getReference().child("messages");
         usersDatabaseReference = database.getReference().child("users");
         chatImagesStorageReference = storage.getReference().child("chat_images");
-
-
-        Intent intent = getIntent();
-        if (intent != null) {
-            userName = intent.getStringExtra("userName");
-        } else {
-            userName = "Default User";
-        }
 
         messageListView = findViewById(R.id.messageListView);
         progressBar = findViewById(R.id.progressBar);
@@ -119,6 +124,8 @@ public class ChatActivity extends AppCompatActivity {
                 AwesomeMessage message = new AwesomeMessage();
                 message.setText(messageEditText.getText().toString());
                 message.setName(userName);
+                message.setSender(auth.getCurrentUser().getUid());
+                message.setRecipient(recipientUserId);
                 message.setImageUrl(null);
                 messagesDatabaseReference.push().setValue(message);
                 messageEditText.setText("");
@@ -171,7 +178,10 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
                 AwesomeMessage message = dataSnapshot.getValue(AwesomeMessage.class);
-                adapter.add(message);
+                if (message.getSender().equals(auth.getCurrentUser().getUid())
+                        && message.getRecipient().equals(recipientUserId)) {
+                    adapter.add(message);
+                }
             }
 
             @Override
