@@ -3,6 +3,7 @@ package com.bergrin.awesomechat;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -95,6 +96,7 @@ public class UserListActivity extends AppCompatActivity {
     private void buildRecyclerView() {
         usersRecyclerView = findViewById(R.id.userListRecyclerView);
         usersRecyclerView.setHasFixedSize(true);
+        usersRecyclerView.addItemDecoration(new DividerItemDecoration(usersRecyclerView.getContext(), DividerItemDecoration.VERTICAL));
         userLayoutManager = new LinearLayoutManager(this);
         userAdapter = new UserAdapter(userArrayList);
         usersRecyclerView.setLayoutManager(userLayoutManager);
